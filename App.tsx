@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Tenant, Expense, UtilityAccount } from './types';
 import Dashboard from './views/Dashboard';
 import TenantsList from './views/TenantsList';
@@ -7,17 +7,41 @@ import LeaseDetails from './views/LeaseDetails';
 import PropertiesList from './views/PropertiesList';
 import FinanceList from './views/FinanceList';
 import BottomNav from './components/BottomNav';
+import Login from './components/Login';
 import { useTenants, useExpenses, useUtilityAccounts, useUserProfile } from './hooks/useSupabase';
+import { supabase } from './lib/supabaseClient';
+import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [currentView, setCurrentView] = useState<View>('home');
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Get initial session
+    supabase?.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase?.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    }) || { data: { subscription: null } };
+
+    return () => subscription?.unsubscribe();
+  }, []);
 
   // Use Supabase hooks for data management
   const { tenants, addTenant, updateTenant } = useTenants();
   const { expenses, addExpense, deleteExpense } = useExpenses();
   const { utilityAccounts, addUtility, updateUtility, deleteUtility } = useUtilityAccounts();
   const { profile: userProfile, updateProfile: onUpdateProfile } = useUserProfile();
+
+  if (!session) {
+    return <Login />;
+  }
 
   const navigateToLeaseDetails = (tenantId: string) => {
     setSelectedTenantId(tenantId);

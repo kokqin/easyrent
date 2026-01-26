@@ -3,6 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { REVENUE_DATA, RECENT_ACTIVITIES, MOCK_PROPERTIES } from '../constants';
 import { Expense, Tenant, UtilityAccount } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 interface DashboardProps {
   onSelectTenant: (id: string) => void;
@@ -13,10 +14,10 @@ interface DashboardProps {
   onUpdateProfile: (updates: Partial<{ name: string; avatar: string }>) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ 
-  onSelectTenant, 
-  expenses, 
-  tenants, 
+const Dashboard: React.FC<DashboardProps> = ({
+  onSelectTenant,
+  expenses,
+  tenants,
   utilityAccounts,
   userProfile,
   onUpdateProfile
@@ -48,10 +49,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
 
       if (isUnpaid) {
-        list.push({ 
-          id: `util-${account.id}`, 
+        list.push({
+          id: `util-${account.id}`,
           msg: `${account.type} payment overdue for ${account.accountNumber}`,
-          type: 'utility' 
+          type: 'utility'
         });
       }
     });
@@ -60,13 +61,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     tenants.forEach(tenant => {
       const endDate = new Date(tenant.leaseEnd);
       endDate.setHours(0, 0, 0, 0);
-      
+
       const isExpired = today.getTime() > endDate.getTime();
       const isLateStatus = tenant.status === 'Late Payment';
 
       if (isExpired || isLateStatus) {
-        list.push({ 
-          id: `tenant-${tenant.id}`, 
+        list.push({
+          id: `tenant-${tenant.id}`,
           msg: `${tenant.name} (${tenant.unit}) - ${isExpired ? 'Lease expired / Overdue' : 'Late payment detected'}`,
           type: 'tenant',
           targetId: tenant.id
@@ -106,19 +107,19 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Header */}
       <header className="flex items-center justify-between px-5">
         <div className="flex items-center gap-3">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept="image/*" 
-            onChange={handleFileChange} 
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileChange}
           />
-          <div 
+          <div
             onClick={handleAvatarClick}
             className="relative group cursor-pointer transition-transform active:scale-95"
             title="Click to change avatar"
           >
-            <div 
+            <div
               className="bg-center bg-no-repeat bg-cover rounded-full size-11 ring-2 ring-slate-200 dark:ring-surface-dark shadow-sm overflow-hidden"
               style={{ backgroundImage: `url("${userProfile.avatar}")` }}
             >
@@ -131,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col justify-center max-w-[140px]">
             <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-tight">Welcome,</h2>
             {isEditingName ? (
-              <input 
+              <input
                 autoFocus
                 className="text-lg font-extrabold leading-tight tracking-tight text-primary bg-transparent border-none p-0 focus:ring-0 w-full"
                 value={tempName}
@@ -140,7 +141,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
               />
             ) : (
-              <h1 
+              <h1
                 onClick={() => { setTempName(userProfile.name); setIsEditingName(true); }}
                 className="text-lg font-extrabold leading-tight tracking-tight text-primary truncate cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1 group"
               >
@@ -150,18 +151,27 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
         </div>
-        <button 
-          onClick={() => setShowNotifications(true)}
-          title={notificationCount > 0 ? `${notificationCount} issues requiring attention` : "No notifications"}
-          className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors relative active:scale-95"
-        >
-          <span className="material-symbols-outlined">notifications</span>
-          {notificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex items-center justify-center size-5 bg-red-500 text-white text-[10px] font-black rounded-full border-2 border-white dark:border-surface-dark animate-bounce">
-              {notificationCount}
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => supabase?.auth.signOut()}
+            title="Sign Out"
+            className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors active:scale-95"
+          >
+            <span className="material-symbols-outlined">logout</span>
+          </button>
+          <button
+            onClick={() => setShowNotifications(true)}
+            title={notificationCount > 0 ? `${notificationCount} issues requiring attention` : "No notifications"}
+            className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors relative active:scale-95"
+          >
+            <span className="material-symbols-outlined">notifications</span>
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center size-5 bg-red-500 text-white text-[10px] font-black rounded-full border-2 border-white dark:border-surface-dark animate-bounce">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Main Stats Grid */}
@@ -228,29 +238,29 @@ const Dashboard: React.FC<DashboardProps> = ({
               <AreaChart data={REVENUE_DATA}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#13ec5b" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#13ec5b" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#13ec5b" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#13ec5b" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis 
-                  dataKey="week" 
-                  hide={false} 
-                  axisLine={false} 
-                  tickLine={false} 
+                <XAxis
+                  dataKey="week"
+                  hide={false}
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                   interval="preserveStartEnd"
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ backgroundColor: '#1c2e24', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff' }}
                   itemStyle={{ color: '#13ec5b' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="#13ec5b" 
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#13ec5b"
                   strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorAmount)" 
+                  fillOpacity={1}
+                  fill="url(#colorAmount)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -266,15 +276,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="flex flex-col gap-3">
           {RECENT_ACTIVITIES.map((activity) => (
-            <div 
+            <div
               key={activity.id}
               className="group flex items-center gap-4 p-3 pr-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-[0.99]"
             >
-              <div className={`size-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${
-                activity.type === 'payment' ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' :
+              <div className={`size-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${activity.type === 'payment' ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' :
                 activity.type === 'lease' ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' :
-                'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
-              }`}>
+                  'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                }`}>
                 <span className="material-symbols-outlined text-[22px]">
                   {activity.type === 'payment' ? 'payments' : activity.type === 'lease' ? 'edit_document' : 'plumbing'}
                 </span>
@@ -297,8 +306,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Notifications Modal */}
       {showNotifications && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-background-dark/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div 
-            className="absolute inset-0" 
+          <div
+            className="absolute inset-0"
             onClick={() => setShowNotifications(false)}
           ></div>
           <div className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-[32px] p-6 shadow-2xl border border-white/5 relative z-10 animate-in zoom-in duration-300">
@@ -307,8 +316,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <span className="material-symbols-outlined text-primary">notifications_active</span>
                 <h4 className="text-xl font-black tracking-tight">Alerts</h4>
               </div>
-              <button 
-                onClick={() => setShowNotifications(false)} 
+              <button
+                onClick={() => setShowNotifications(false)}
                 className="size-10 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors"
               >
                 <span className="material-symbols-outlined font-black">close</span>
@@ -318,7 +327,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto no-scrollbar">
               {notifications.length > 0 ? (
                 notifications.map((notif) => (
-                  <div 
+                  <div
                     key={notif.id}
                     onClick={() => {
                       if (notif.targetId) {
@@ -328,9 +337,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                     }}
                     className="flex gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-background-dark/50 border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all cursor-pointer group"
                   >
-                    <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      notif.type === 'tenant' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'
-                    }`}>
+                    <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${notif.type === 'tenant' ? 'bg-primary/10 text-primary' : 'bg-orange-500/10 text-orange-500'
+                      }`}>
                       <span className="material-symbols-outlined">
                         {notif.type === 'tenant' ? 'person_alert' : 'warning'}
                       </span>
@@ -357,9 +365,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               )}
             </div>
-            
+
             {notifications.length > 0 && (
-              <button 
+              <button
                 onClick={() => setShowNotifications(false)}
                 className="w-full mt-6 bg-primary/10 text-primary font-black py-4 rounded-2xl uppercase tracking-widest text-xs hover:bg-primary hover:text-background-dark transition-all active:scale-95"
               >
