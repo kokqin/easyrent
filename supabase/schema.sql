@@ -1,5 +1,5 @@
 
--- ZenLease Landlord Portal - Supabase Database Schema
+-- Rental Solution Landlord Portal - Supabase Database Schema
 -- Run this SQL in your Supabase SQL Editor to create all required tables
 
 -- 1. Properties table

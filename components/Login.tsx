@@ -40,7 +40,7 @@ const Login: React.FC = () => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
             <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">ZenLease</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Rental Solution</h1>
                     <p className="text-gray-500 dark:text-gray-400">
                         {isSignUp ? 'Create your landlord account' : 'Welcome back, Landlord'}
                     </p>
