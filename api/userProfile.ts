@@ -16,23 +16,28 @@ export async function getUserProfile(): Promise<UserProfile> {
         return { id: 'default', ...DEFAULT_PROFILE };
     }
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { id: 'default', ...DEFAULT_PROFILE };
+    }
+
     const { data, error } = await supabase
         .from('user_profile')
         .select('*')
-        .limit(1)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
     if (error || !data) {
-        // Create default profile if none exists
+        // Create default profile if none exists for this user
         const { data: newData, error: insertError } = await supabase
             .from('user_profile')
-            .insert([DEFAULT_PROFILE])
+            .insert([{ ...DEFAULT_PROFILE, user_id: user.id }])
             .select()
             .single();
 
         if (insertError || !newData) {
             console.error('Error creating user profile:', insertError);
-            return { id: 'default', ...DEFAULT_PROFILE };
+            return { id: user.id, ...DEFAULT_PROFILE };
         }
 
         return {
@@ -52,22 +57,13 @@ export async function getUserProfile(): Promise<UserProfile> {
 export async function updateUserProfile(updates: Partial<Omit<UserProfile, 'id'>>): Promise<UserProfile | null> {
     if (!supabase) return null;
 
-    // Get existing profile first
-    const { data: existingData } = await supabase
-        .from('user_profile')
-        .select('id')
-        .limit(1)
-        .single();
-
-    if (!existingData) {
-        console.error('No user profile found to update');
-        return null;
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
     const { data, error } = await supabase
         .from('user_profile')
         .update(updates)
-        .eq('id', existingData.id)
+        .eq('user_id', user.id)
         .select()
         .single();
 

@@ -37,9 +37,13 @@ const mapTenantToRow = (tenant: Partial<Tenant>) => ({
 export async function getTenants(): Promise<Tenant[]> {
     if (!supabase) return [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
         .from('tenants')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -53,10 +57,14 @@ export async function getTenants(): Promise<Tenant[]> {
 export async function getTenantById(id: string): Promise<Tenant | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('tenants')
         .select('*')
         .eq('id', id)
+        .eq('user_id', user.id)
         .single();
 
     if (error) {

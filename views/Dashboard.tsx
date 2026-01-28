@@ -220,13 +220,28 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {isConfigBound(userProfile.email) ? (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20 mr-1">
+              <span className="size-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-[10px] font-black uppercase tracking-widest">API Bound</span>
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-500/10 text-slate-500 border border-slate-500/20 mr-1">
+              <span className="size-1.5 bg-slate-500 rounded-full"></span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Mock Mode</span>
+            </div>
+          )}
           <button
             onClick={() => {
-              setDbConfig({ url: '', key: '' });
+              const activeConfig = getSupabaseConfig(userProfile.email);
+              setDbConfig(activeConfig);
               setShowSettings(true);
             }}
             title="Settings"
-            className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors active:scale-95"
+            className={`flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark shadow-sm border transition-all active:scale-95 ${isConfigBound(userProfile.email)
+                ? 'text-primary border-primary/20 bg-primary/5'
+                : 'text-slate-700 dark:text-slate-200 border-slate-100 dark:border-white/5'
+              } hover:bg-slate-50 dark:hover:bg-white/10`}
           >
             <span className="material-symbols-outlined">settings</span>
           </button>

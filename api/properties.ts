@@ -16,9 +16,13 @@ const mapRowToRoom = (row: any): Room => ({
 export async function getProperties(): Promise<Property[]> {
     if (!supabase) return [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
     if (propertiesError) {
@@ -28,7 +32,8 @@ export async function getProperties(): Promise<Property[]> {
 
     const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
 
     if (roomsError) {
         console.error('Error fetching rooms:', roomsError);
