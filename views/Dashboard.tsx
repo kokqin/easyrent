@@ -239,8 +239,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             }}
             title="Settings"
             className={`flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark shadow-sm border transition-all active:scale-95 ${isConfigBound(userProfile.email)
-                ? 'text-primary border-primary/20 bg-primary/5'
-                : 'text-slate-700 dark:text-slate-200 border-slate-100 dark:border-white/5'
+              ? 'text-primary border-primary/20 bg-primary/5'
+              : 'text-slate-700 dark:text-slate-200 border-slate-100 dark:border-white/5'
               } hover:bg-slate-50 dark:hover:bg-white/10`}
           >
             <span className="material-symbols-outlined">settings</span>
@@ -281,10 +281,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               </p>
               <div className="flex items-end gap-3 mt-2">
                 <span className="text-4xl font-extrabold tracking-tight">{tenants.length}</span>
-                <span className="inline-flex items-center text-xs font-bold text-[#111813] mb-1.5 px-2 py-1 rounded-full bg-primary shadow-[0_0_10px_rgba(19,236,91,0.3)]">
-                  <span className="material-symbols-outlined text-[14px] mr-0.5 font-bold">arrow_upward</span>
-                  4
-                </span>
               </div>
             </div>
           </div>
