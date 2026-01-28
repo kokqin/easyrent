@@ -156,7 +156,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={() => {
+              setDbConfig({ url: '', key: '' });
+              setShowSettings(true);
+            }}
             title="Settings"
             className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors active:scale-95"
           >
