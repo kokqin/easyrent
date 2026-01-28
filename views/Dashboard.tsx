@@ -3,7 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { REVENUE_DATA, RECENT_ACTIVITIES, MOCK_PROPERTIES } from '../constants';
 import { Expense, Tenant, UtilityAccount } from '../types';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, getSupabaseConfig, updateSupabaseConfig, clearSupabaseConfig } from '../lib/supabaseClient';
 
 interface DashboardProps {
   onSelectTenant: (id: string) => void;
@@ -23,8 +23,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   onUpdateProfile
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userProfile.name);
+
+  const [dbConfig, setDbConfig] = useState(getSupabaseConfig());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Notification Logic
@@ -152,6 +155,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+            className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 shadow-sm border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors active:scale-95"
+          >
+            <span className="material-symbols-outlined">settings</span>
+          </button>
           <button
             onClick={() => supabase?.auth.signOut()}
             title="Sign Out"
@@ -374,6 +384,73 @@ const Dashboard: React.FC<DashboardProps> = ({
                 Dismiss All
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-background-dark/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => setShowSettings(false)}
+          ></div>
+          <div className="bg-white dark:bg-surface-dark w-full max-w-sm rounded-[32px] p-6 shadow-2xl border border-white/5 relative z-10 animate-in zoom-in duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">settings</span>
+                <h4 className="text-xl font-black tracking-tight">Database Settings</h4>
+              </div>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="size-10 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-full text-slate-400 hover:text-white transition-colors"
+              >
+                <span className="material-symbols-outlined font-black">close</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Supabase URL</label>
+                <input
+                  type="text"
+                  placeholder="https://xxx.supabase.co"
+                  className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 text-sm focus:border-primary/50 transition-all outline-none"
+                  value={dbConfig.url}
+                  onChange={(e) => setDbConfig({ ...dbConfig, url: e.target.value })}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Anon Key</label>
+                <textarea
+                  placeholder="eyJhbGci..."
+                  rows={3}
+                  className="w-full bg-slate-50 dark:bg-background-dark/50 border border-slate-200 dark:border-white/5 rounded-2xl p-4 text-sm focus:border-primary/50 transition-all outline-none resize-none"
+                  value={dbConfig.key}
+                  onChange={(e) => setDbConfig({ ...dbConfig, key: e.target.value })}
+                />
+              </div>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={() => clearSupabaseConfig()}
+                  className="flex-1 bg-red-500/10 text-red-500 font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white transition-all active:scale-95"
+                >
+                  Clear Hook
+                </button>
+                <button
+                  onClick={() => updateSupabaseConfig(dbConfig.url, dbConfig.key)}
+                  className="flex-[2] bg-primary text-background-dark font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  Save & Reload
+                </button>
+              </div>
+
+              <p className="text-[10px] text-center text-slate-500 mt-2 leading-relaxed">
+                Settings are saved locally in your browser and never uploaded to public servers.
+              </p>
+            </div>
           </div>
         </div>
       )}
