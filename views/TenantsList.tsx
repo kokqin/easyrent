@@ -16,8 +16,8 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
   // New Tenant Form State - using YYYY-MM-DD for date inputs
   const [newTenantData, setNewTenantData] = useState({
     name: '',
-    property: '',
-    unit: '',
+    propertyId: '',
+    unitId: '', // Added roomId support
     rent: '',
     deposit: '',
     leaseStart: new Date().toISOString().split('T')[0],
@@ -27,15 +27,18 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
 
   // Set default property when properties load or modal opens
   useEffect(() => {
-    if (showAddModal && properties.length > 0 && !newTenantData.property) {
-      setNewTenantData(prev => ({ ...prev, property: properties[0].name }));
+    if (showAddModal && properties.length > 0 && !newTenantData.propertyId) {
+      setNewTenantData(prev => ({ ...prev, propertyId: properties[0].id }));
     }
   }, [showAddModal, properties]);
 
+  const selectedProperty = useMemo(() => {
+    return properties.find(p => p.id === newTenantData.propertyId);
+  }, [newTenantData.propertyId, properties]);
+
   const availableUnits = useMemo(() => {
-    const prop = properties.find(p => p.name === newTenantData.property);
-    return prop ? prop.rooms : [];
-  }, [newTenantData.property, properties]);
+    return selectedProperty ? selectedProperty.rooms : [];
+  }, [selectedProperty]);
 
   const filteredTenants = tenants.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,13 +57,16 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
   };
 
   const handleAddSubmit = () => {
-    if (!newTenantData.name || !newTenantData.unit || !newTenantData.rent) return;
+    const selectedProp = properties.find(p => p.id === newTenantData.propertyId);
+    const selectedRoom = selectedProp?.rooms.find(r => r.id === newTenantData.unitId);
 
     const newTenant: Tenant = {
       id: Date.now().toString(),
       name: newTenantData.name,
-      property: newTenantData.property,
-      unit: newTenantData.unit,
+      property: selectedProp?.name || '',
+      propertyId: newTenantData.propertyId,
+      unit: selectedRoom?.number || '',
+      roomId: newTenantData.unitId,
       rent: parseFloat(newTenantData.rent) || 0,
       deposit: parseFloat(newTenantData.deposit) || 0,
       leaseStart: formatForDisplay(newTenantData.leaseStart),
@@ -75,8 +81,8 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
     // Reset form
     setNewTenantData({
       name: '',
-      property: properties[0]?.name || '',
-      unit: '',
+      propertyId: properties[0]?.id || '',
+      unitId: '',
       rent: '',
       deposit: '',
       leaseStart: new Date().toISOString().split('T')[0],
@@ -149,7 +155,9 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
               <div className="flex flex-col flex-1 min-w-0">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">{tenant.name}</h3>
                 <p className="text-[11px] font-bold text-primary uppercase tracking-wider mt-0.5 truncate">
-                  {tenant.property} • Unit {tenant.unit}
+                  {properties.find(p => p.id === tenant.propertyId)?.name || tenant.property} • Unit {
+                    properties.find(p => p.id === tenant.propertyId)?.rooms.find(r => r.id === tenant.roomId)?.number || tenant.unit
+                  }
                 </p>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[12px] opacity-70">event</span>
@@ -200,32 +208,31 @@ const TenantsList: React.FC<TenantsListProps> = ({ tenants, properties, onSelect
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Property</label>
-                  <select
-                    className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
-                    value={newTenantData.property}
-                    onChange={e => setNewTenantData({ ...newTenantData, property: e.target.value, unit: '' })}
-                  >
-                    {properties.map(p => (
-                      <option key={p.id} value={p.name}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Unit</label>
-                  <select
-                    className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
-                    value={newTenantData.unit}
-                    onChange={e => setNewTenantData({ ...newTenantData, unit: e.target.value })}
-                  >
-                    <option value="" disabled>Select</option>
-                    {availableUnits.map(room => (
-                      <option key={room.id} value={room.number}>{room.number}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Property</label>
+                <select
+                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
+                  value={newTenantData.propertyId}
+                  onChange={e => setNewTenantData({ ...newTenantData, propertyId: e.target.value, unitId: '' })}
+                >
+                  <option value="" disabled>Select Property</option>
+                  {properties.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Room</label>
+                <select
+                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
+                  value={newTenantData.unitId}
+                  onChange={e => setNewTenantData({ ...newTenantData, unitId: e.target.value })}
+                >
+                  <option value="" disabled>Select Room</option>
+                  {availableUnits.map(room => (
+                    <option key={room.id} value={room.id}>Room {room.number}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

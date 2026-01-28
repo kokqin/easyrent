@@ -10,6 +10,8 @@ export interface Tenant {
   status: TenantStatus;
   avatar?: string;
   property: string;
+  propertyId?: string; // Reference to live property data
+  roomId?: string;     // Reference to live room data
   rent: number;
   deposit: number;
   notes: string;
