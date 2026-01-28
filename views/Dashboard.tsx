@@ -119,17 +119,18 @@ const Dashboard: React.FC<DashboardProps> = ({
     return Math.max(0, totalRooms - occupiedUnits.size);
   }, [tenants, properties]);
 
-  // Derive Revenue Chart Data
-  const { revenueChartData, totalRevenueMonth } = useMemo(() => {
+  // Derive Net Balance Chart Data
+  const { revenueChartData, totalNetBalanceMonth } = useMemo(() => {
     const today = new Date();
     const currentMonth = today.toISOString().substring(0, 7);
 
-    // Filter income for the current month
-    const incomeThisMonth = expenses.filter(e => e.type === 'Income' && e.date.startsWith(currentMonth));
-    const total = incomeThisMonth.reduce((sum, e) => sum + e.amount, 0);
+    // Filter all records for the current month
+    const itemsThisMonth = expenses.filter(e => e.date.startsWith(currentMonth));
 
-    // Create 4-week data points (Simplified: 1/4th of total per point or group by day/week)
-    // For now, let's create a more realistic looking chart based on transaction dates
+    const income = itemsThisMonth.filter(e => e.type === 'Income').reduce((sum, e) => sum + e.amount, 0);
+    const expense = itemsThisMonth.filter(e => e.type === 'Expense').reduce((sum, e) => sum + e.amount, 0);
+    const netTotal = income - expense;
+
     const weeklyData = [
       { week: 'Week 1', amount: 0 },
       { week: 'Week 2', amount: 0 },
@@ -137,15 +138,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       { week: 'Current', amount: 0 }
     ];
 
-    incomeThisMonth.forEach(e => {
+    itemsThisMonth.forEach(e => {
       const day = new Date(e.date).getDate();
-      if (day <= 7) weeklyData[0].amount += e.amount;
-      else if (day <= 14) weeklyData[1].amount += e.amount;
-      else if (day <= 21) weeklyData[2].amount += e.amount;
-      else weeklyData[3].amount += e.amount;
+      const val = e.type === 'Income' ? e.amount : -e.amount;
+      if (day <= 7) weeklyData[0].amount += val;
+      else if (day <= 14) weeklyData[1].amount += val;
+      else if (day <= 21) weeklyData[2].amount += val;
+      else weeklyData[3].amount += val;
     });
 
-    return { revenueChartData: weeklyData, totalRevenueMonth: total };
+    return { revenueChartData: weeklyData, totalNetBalanceMonth: netTotal };
   }, [expenses]);
 
   // Derive Recent Activity
@@ -311,8 +313,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="p-5 rounded-2xl bg-white dark:bg-surface-dark shadow-sm border border-slate-100 dark:border-white/5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex flex-col">
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Monthly Revenue</p>
-              <h3 className="text-3xl font-extrabold tracking-tight">${totalRevenueMonth.toLocaleString()}</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Monthly Net Balance</p>
+              <h3 className={`text-3xl font-extrabold tracking-tight ${totalNetBalanceMonth >= 0 ? 'text-slate-900 dark:text-white' : 'text-red-500'}`}>
+                ${totalNetBalanceMonth.toLocaleString()}
+              </h3>
             </div>
           </div>
           <div className="h-40 w-full">
