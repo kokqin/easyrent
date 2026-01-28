@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tenant, Expense, UtilityAccount, Property, Activity } from '../types';
-import { isSupabaseConfigured } from '../lib/supabaseClient';
+import { isSupabaseConfigured, supabase } from '../lib/supabaseClient';
 import * as api from '../api';
 import { MOCK_TENANTS, MOCK_EXPENSES, MOCK_UTILITY_ACCOUNTS, MOCK_PROPERTIES, RECENT_ACTIVITIES } from '../constants';
 
@@ -342,13 +342,14 @@ export function useActivities() {
 // Hook for managing user profile
 export function useUserProfile() {
     const [state, setState] = useState<{
-        profile: { name: string; avatar: string };
+        profile: { name: string; avatar: string; email?: string };
         loading: boolean;
         error: string | null;
     }>({
         profile: {
             name: 'Billionaire',
-            avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100'
+            avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100',
+            email: undefined
         },
         loading: true,
         error: null
@@ -361,9 +362,14 @@ export function useUserProfile() {
         }
 
         setState(prev => ({ ...prev, loading: true }));
+        const { data: { user } } = await supabase!.auth.getUser();
         const data = await api.getUserProfile();
         setState({
-            profile: { name: data.name, avatar: data.avatar },
+            profile: {
+                name: data.name,
+                avatar: data.avatar,
+                email: user?.email
+            },
             loading: false,
             error: null
         });

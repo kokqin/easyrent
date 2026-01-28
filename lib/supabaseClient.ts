@@ -1,16 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Configuration keys for localStorage
-const STORAGE_KEYS = {
-    URL: 'easyrent_supabase_url',
-    KEY: 'easyrent_supabase_key'
+const STORAGE_PREFIX = 'easyrent_supabase';
+
+const getStorageKey = (type: 'url' | 'key', email?: string) => {
+    if (email) return `${STORAGE_PREFIX}_${type}_${email}`;
+    return `${STORAGE_PREFIX}_${type}_global`;
 };
 
-const getStoredConfig = () => {
+const getStoredConfig = (email?: string) => {
     if (typeof window === 'undefined') return { url: null, key: null };
+
+    // If email provided, try that first
+    if (email) {
+        const url = localStorage.getItem(getStorageKey('url', email));
+        const key = localStorage.getItem(getStorageKey('key', email));
+        if (url && key) return { url, key };
+    }
+
+    // Fallback to last used or global
+    const lastUser = localStorage.getItem(`${STORAGE_PREFIX}_last_user`);
+    const targetEmail = email || lastUser;
+
+    if (targetEmail) {
+        const url = localStorage.getItem(getStorageKey('url', targetEmail));
+        const key = localStorage.getItem(getStorageKey('key', targetEmail));
+        if (url && key) return { url, key };
+    }
+
     return {
-        url: localStorage.getItem(STORAGE_KEYS.URL),
-        key: localStorage.getItem(STORAGE_KEYS.KEY)
+        url: localStorage.getItem(getStorageKey('url')),
+        key: localStorage.getItem(getStorageKey('key'))
     };
 };
 
@@ -29,19 +49,25 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 export const isSupabaseConfigured = () => !!supabase;
 
-export const updateSupabaseConfig = (url: string, key: string) => {
-    localStorage.setItem(STORAGE_KEYS.URL, url);
-    localStorage.setItem(STORAGE_KEYS.KEY, key);
-    window.location.reload(); // Reload to re-initialize client
-};
-
-export const clearSupabaseConfig = () => {
-    localStorage.removeItem(STORAGE_KEYS.URL);
-    localStorage.removeItem(STORAGE_KEYS.KEY);
+export const updateSupabaseConfig = (url: string, key: string, email?: string) => {
+    localStorage.setItem(getStorageKey('url', email), url);
+    localStorage.setItem(getStorageKey('key', email), key);
+    if (email) {
+        localStorage.setItem(`${STORAGE_PREFIX}_last_user`, email);
+    }
     window.location.reload();
 };
 
-export const getSupabaseConfig = () => ({
-    url: localStorage.getItem(STORAGE_KEYS.URL) || import.meta.env.VITE_SUPABASE_URL || '',
-    key: localStorage.getItem(STORAGE_KEYS.KEY) || import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-});
+export const clearSupabaseConfig = (email?: string) => {
+    localStorage.removeItem(getStorageKey('url', email));
+    localStorage.removeItem(getStorageKey('key', email));
+    window.location.reload();
+};
+
+export const getSupabaseConfig = (email?: string) => {
+    const config = getStoredConfig(email);
+    return {
+        url: config.url || import.meta.env.VITE_SUPABASE_URL || '',
+        key: config.key || import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+    };
+};

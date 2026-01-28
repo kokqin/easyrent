@@ -10,7 +10,7 @@ interface DashboardProps {
   expenses: Expense[];
   tenants: Tenant[];
   utilityAccounts: UtilityAccount[];
-  userProfile: { name: string; avatar: string };
+  userProfile: { name: string; avatar: string; email?: string };
   onUpdateProfile: (updates: Partial<{ name: string; avatar: string }>) => void;
 }
 
@@ -27,7 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userProfile.name);
 
-  const [dbConfig, setDbConfig] = useState(getSupabaseConfig());
+  const [dbConfig, setDbConfig] = useState(getSupabaseConfig(userProfile.email));
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Notification Logic
@@ -437,13 +437,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="flex gap-3 mt-2">
                 <button
-                  onClick={() => clearSupabaseConfig()}
+                  onClick={() => clearSupabaseConfig(userProfile.email)}
                   className="flex-1 bg-red-500/10 text-red-500 font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] hover:bg-red-500 hover:text-white transition-all active:scale-95"
                 >
                   Clear Hook
                 </button>
                 <button
-                  onClick={() => updateSupabaseConfig(dbConfig.url, dbConfig.key)}
+                  onClick={() => updateSupabaseConfig(dbConfig.url, dbConfig.key, userProfile.email)}
                   className="flex-[2] bg-primary text-background-dark font-black py-4 rounded-2xl uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   Save & Reload
