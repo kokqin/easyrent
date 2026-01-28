@@ -20,8 +20,8 @@ const mapExpenseToRow = (expense: Partial<Expense>) => ({
     category: expense.category,
     type: expense.type,
     photos: expense.photos,
-    property_id: expense.propertyId,
-    utility_account_id: expense.utilityAccountId
+    property_id: expense.propertyId || null,
+    utility_account_id: expense.utilityAccountId || null
 });
 
 export async function getExpenses(): Promise<Expense[]> {

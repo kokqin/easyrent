@@ -50,7 +50,7 @@ const App: React.FC = () => {
   };
 
   const handleAddExpense = (newExpense: Expense) => {
-    addExpense(newExpense);
+    return addExpense(newExpense);
   };
 
   const handleDeleteExpense = (id: string) => {
@@ -58,7 +58,7 @@ const App: React.FC = () => {
   };
 
   const handleAddUtility = (newUtility: UtilityAccount) => {
-    addUtility(newUtility);
+    return addUtility(newUtility);
   };
 
   const handleUpdateUtility = (updatedUtility: UtilityAccount) => {
