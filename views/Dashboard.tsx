@@ -145,14 +145,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       else weeklyData[3].amount += e.amount;
     });
 
-    // If no data, fallback to a small baseline to avoid empty chart
-    if (total === 0) {
-      return {
-        revenueChartData: REVENUE_DATA,
-        totalRevenueMonth: REVENUE_DATA[REVENUE_DATA.length - 1].amount
-      };
-    }
-
     return { revenueChartData: weeklyData, totalRevenueMonth: total };
   }, [expenses]);
 

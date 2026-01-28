@@ -90,12 +90,8 @@ const FinanceList: React.FC<FinanceListProps> = ({
       return exp.date.substring(0, 7) === selectedMonth;
     });
 
-    const mockIncome = MOCK_TENANTS.reduce((sum, tenant) => sum + tenant.rent, 0);
-    const addedIncome = filteredExpenses.filter(e => e.type === 'Income').reduce((sum, exp) => sum + exp.amount, 0);
-    const addedExpenses = filteredExpenses.filter(e => e.type === 'Expense').reduce((sum, exp) => sum + exp.amount, 0);
-
-    const totalIncome = mockIncome + addedIncome;
-    const totalExpenses = addedExpenses;
+    const totalIncome = filteredExpenses.filter(e => e.type === 'Income').reduce((sum, exp) => sum + exp.amount, 0);
+    const totalExpenses = filteredExpenses.filter(e => e.type === 'Expense').reduce((sum, exp) => sum + exp.amount, 0);
 
     return {
       expenses: filteredExpenses,
