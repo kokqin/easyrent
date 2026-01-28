@@ -284,6 +284,73 @@ export function useProperties() {
         }
     }, []);
 
+    const addRoom = useCallback(async (propertyId: string, roomNumber: string) => {
+        if (!isSupabaseConfigured()) {
+            const newRoom = { id: Date.now().toString(), number: roomNumber };
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? { ...p, rooms: [...p.rooms, newRoom] } : p)
+            }));
+            return;
+        }
+
+        const newRoom = await api.addRoom(propertyId, roomNumber);
+        if (newRoom) {
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? { ...p, rooms: [...p.rooms, newRoom] } : p)
+            }));
+        }
+    }, []);
+
+    const updateRoom = useCallback(async (propertyId: string, roomId: string, roomNumber: string) => {
+        if (!isSupabaseConfigured()) {
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? {
+                    ...p,
+                    rooms: p.rooms.map(r => r.id === roomId ? { ...r, number: roomNumber } : r)
+                } : p)
+            }));
+            return;
+        }
+
+        const updated = await api.updateRoom(roomId, roomNumber);
+        if (updated) {
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? {
+                    ...p,
+                    rooms: p.rooms.map(r => r.id === roomId ? updated : r)
+                } : p)
+            }));
+        }
+    }, []);
+
+    const deleteRoom = useCallback(async (propertyId: string, roomId: string) => {
+        if (!isSupabaseConfigured()) {
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? {
+                    ...p,
+                    rooms: p.rooms.filter(r => r.id !== roomId)
+                } : p)
+            }));
+            return;
+        }
+
+        const success = await api.deleteRoom(roomId);
+        if (success) {
+            setState(prev => ({
+                ...prev,
+                data: prev.data.map(p => p.id === propertyId ? {
+                    ...p,
+                    rooms: p.rooms.filter(r => r.id !== roomId)
+                } : p)
+            }));
+        }
+    }, []);
+
     return {
         properties: state.data,
         loading: state.loading,
@@ -291,6 +358,9 @@ export function useProperties() {
         addProperty,
         updateProperty,
         deleteProperty,
+        addRoom,
+        updateRoom,
+        deleteRoom,
         refetch: fetchProperties
     };
 }

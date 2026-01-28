@@ -8,7 +8,7 @@ import PropertiesList from './views/PropertiesList';
 import FinanceList from './views/FinanceList';
 import BottomNav from './components/BottomNav';
 import Login from './components/Login';
-import { useTenants, useExpenses, useUtilityAccounts, useUserProfile } from './hooks/useSupabase';
+import { useTenants, useExpenses, useUtilityAccounts, useUserProfile, useProperties } from './hooks/useSupabase';
 import { supabase } from './lib/supabaseClient';
 import { Session } from '@supabase/supabase-js';
 
@@ -38,6 +38,7 @@ const App: React.FC = () => {
   const { expenses, addExpense, deleteExpense } = useExpenses();
   const { utilityAccounts, addUtility, updateUtility, deleteUtility } = useUtilityAccounts();
   const { profile: userProfile, updateProfile: onUpdateProfile } = useUserProfile();
+  const { properties, addProperty, updateProperty, deleteProperty, addRoom, updateRoom, deleteRoom } = useProperties();
 
   if (!session) {
     return <Login />;
@@ -96,7 +97,18 @@ const App: React.FC = () => {
       case 'tenants':
         return <TenantsList tenants={tenants} onSelectTenant={navigateToLeaseDetails} onAddTenant={handleAddTenant} />;
       case 'properties':
-        return <PropertiesList expenses={expenses} />;
+        return (
+          <PropertiesList
+            expenses={expenses}
+            properties={properties}
+            onAddProperty={addProperty}
+            onUpdateProperty={updateProperty}
+            onDeleteProperty={deleteProperty}
+            onAddRoom={addRoom}
+            onUpdateRoom={updateRoom}
+            onDeleteRoom={deleteRoom}
+          />
+        );
       case 'finance':
         return (
           <FinanceList
