@@ -44,7 +44,7 @@ export interface Property {
   rooms: Room[];
 }
 
-export type ExpenseCategory = 'Maintenance' | 'Cleaning' | 'Utilities' | 'Other';
+export type ExpenseCategory = 'Maintenance' | 'Cleaning' | 'Utilities' | 'Rent' | 'Other';
 
 export interface Expense {
   id: string;
@@ -55,6 +55,7 @@ export interface Expense {
   type: 'Income' | 'Expense';
   photos: string[];
   propertyId?: string;
+  roomId?: string; // Optional: Link to a specific room
   utilityAccountId?: string; // Link to a specific utility account
 }
 

@@ -46,9 +46,11 @@ CREATE TABLE IF NOT EXISTS expenses (
   title TEXT NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
   date DATE NOT NULL,
-  category TEXT CHECK (category IN ('Maintenance', 'Cleaning', 'Utilities', 'Other')) NOT NULL,
+  category TEXT CHECK (category IN ('Maintenance', 'Cleaning', 'Utilities', 'Rent', 'Other')) NOT NULL,
+  type TEXT CHECK (type IN ('Income', 'Expense')) DEFAULT 'Expense',
   photos TEXT[],
   property_id UUID REFERENCES properties(id),
+  room_id UUID REFERENCES rooms(id),
   utility_account_id UUID,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

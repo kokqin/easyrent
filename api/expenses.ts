@@ -10,6 +10,7 @@ const mapRowToExpense = (row: any): Expense => ({
     type: row.type || 'Expense',
     photos: row.photos || [],
     propertyId: row.property_id,
+    roomId: row.room_id,
     utilityAccountId: row.utility_account_id
 });
 
@@ -21,6 +22,7 @@ const mapExpenseToRow = (expense: Partial<Expense>) => ({
     type: expense.type,
     photos: expense.photos,
     property_id: expense.propertyId || null,
+    room_id: expense.roomId || null,
     utility_account_id: expense.utilityAccountId || null
 });
 

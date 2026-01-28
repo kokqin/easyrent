@@ -41,6 +41,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     type: 'Income' | 'Expense';
     utilityAccountId: string;
     propertyId: string;
+    roomId: string;
     photos: string[];
   }>({
     title: '',
@@ -50,6 +51,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     type: 'Expense',
     utilityAccountId: '',
     propertyId: properties[0]?.id || '',
+    roomId: '',
     photos: []
   });
 
@@ -117,6 +119,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
       type: newExpense.type,
       utilityAccountId: newExpense.category === 'Utilities' ? newExpense.utilityAccountId : undefined,
       propertyId: newExpense.propertyId,
+      roomId: newExpense.roomId || undefined,
       photos: newExpense.photos
     };
 
@@ -137,6 +140,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
       type: 'Expense',
       utilityAccountId: '',
       propertyId: properties[0]?.id || '',
+      roomId: '',
       photos: []
     });
     setShowAddForm(false);
@@ -191,6 +195,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
 
   const getExpenseIcon = (expense: Expense) => {
     if (expense.type === 'Income') return { icon: 'trending_up', color: 'bg-green-500/10 text-green-500' };
+    if (expense.category === 'Rent') return { icon: 'home', color: 'bg-primary/10 text-primary' };
     if (expense.category === 'Maintenance') return { icon: 'build', color: 'bg-red-500/10 text-red-500' };
     if (expense.category === 'Cleaning') return { icon: 'cleaning_services', color: 'bg-blue-500/10 text-blue-500' };
 
@@ -446,9 +451,12 @@ const FinanceList: React.FC<FinanceListProps> = ({
                 <select
                   className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
                   value={newExpense.category}
-                  onChange={e => setNewExpense({ ...newExpense, category: e.target.value as ExpenseCategory })}
-                  disabled={newExpense.type === 'Income'}
+                  onChange={e => {
+                    const cat = e.target.value as ExpenseCategory;
+                    setNewExpense({ ...newExpense, category: cat, title: cat === 'Rent' ? 'Rental Income' : newExpense.title });
+                  }}
                 >
+                  <option value="Rent">Rent</option>
                   <option value="Maintenance">Maintenance</option>
                   <option value="Cleaning">Cleaning</option>
                   <option value="Utilities">Utilities</option>
@@ -458,13 +466,26 @@ const FinanceList: React.FC<FinanceListProps> = ({
               <select
                 className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
                 value={newExpense.propertyId}
-                onChange={e => setNewExpense({ ...newExpense, propertyId: e.target.value })}
+                onChange={e => setNewExpense({ ...newExpense, propertyId: e.target.value, roomId: '' })}
               >
                 <option value="">Select Property...</option>
                 {properties.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
+
+              {newExpense.propertyId && properties.find(p => p.id === newExpense.propertyId)?.rooms.length! > 0 && (
+                <select
+                  className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold appearance-none"
+                  value={newExpense.roomId}
+                  onChange={e => setNewExpense({ ...newExpense, roomId: e.target.value })}
+                >
+                  <option value="">No Room (Whole Property)</option>
+                  {properties.find(p => p.id === newExpense.propertyId)?.rooms.map(r => (
+                    <option key={r.id} value={r.id}>Room {r.number}</option>
+                  ))}
+                </select>
+              )}
               {newExpense.category === 'Utilities' && (
                 <select
                   className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold"
