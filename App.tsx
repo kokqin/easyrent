@@ -95,7 +95,14 @@ const App: React.FC = () => {
           />
         );
       case 'tenants':
-        return <TenantsList tenants={tenants} onSelectTenant={navigateToLeaseDetails} onAddTenant={handleAddTenant} />;
+        return (
+          <TenantsList
+            tenants={tenants}
+            properties={properties}
+            onSelectTenant={navigateToLeaseDetails}
+            onAddTenant={handleAddTenant}
+          />
+        );
       case 'properties':
         return (
           <PropertiesList
