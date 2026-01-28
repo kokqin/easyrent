@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
-import { MOCK_TENANTS, MOCK_PROPERTIES } from '../constants';
-import { Expense, ExpenseCategory, UtilityAccount, UtilityType } from '../types';
+import { Expense, ExpenseCategory, UtilityAccount, UtilityType, Property } from '../types';
 
 interface FinanceListProps {
   expenses: Expense[];
+  properties: Property[];
   utilityAccounts: UtilityAccount[];
   onAddExpense: (expense: Expense) => void;
   onDeleteExpense: (id: string) => void;
@@ -15,6 +15,7 @@ interface FinanceListProps {
 
 const FinanceList: React.FC<FinanceListProps> = ({
   expenses,
+  properties,
   utilityAccounts,
   onAddExpense,
   onDeleteExpense,
@@ -48,7 +49,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     category: 'Maintenance',
     type: 'Expense',
     utilityAccountId: '',
-    propertyId: MOCK_PROPERTIES[0]?.id || '',
+    propertyId: properties[0]?.id || '',
     photos: []
   });
 
@@ -61,7 +62,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     type: 'Electricity',
     accountNumber: '',
     provider: '',
-    propertyId: MOCK_PROPERTIES[0]?.id || ''
+    propertyId: properties[0]?.id || ''
   });
 
   const monthOptions = useMemo(() => {
@@ -133,7 +134,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
       category: 'Maintenance',
       type: 'Expense',
       utilityAccountId: '',
-      propertyId: MOCK_PROPERTIES[0]?.id || '',
+      propertyId: properties[0]?.id || '',
       photos: []
     });
     setShowAddForm(false);
@@ -159,7 +160,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
       type: 'Electricity',
       accountNumber: '',
       provider: '',
-      propertyId: MOCK_PROPERTIES[0]?.id || ''
+      propertyId: properties[0]?.id || ''
     });
     setEditingUtilityId(null);
     setShowUtilityForm(false);
@@ -332,7 +333,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
             <button
               onClick={() => {
                 setEditingUtilityId(null);
-                setUtilityFormData({ type: 'Electricity', accountNumber: '', provider: '', propertyId: MOCK_PROPERTIES[0]?.id || '' });
+                setUtilityFormData({ type: 'Electricity', accountNumber: '', provider: '', propertyId: properties[0]?.id || '' });
                 setShowUtilityForm(true);
               }}
               className="text-primary text-xs font-black uppercase tracking-widest flex items-center gap-1.5 bg-primary/10 px-4 py-2.5 rounded-2xl active:scale-95 transition-transform"
@@ -343,7 +344,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
           </div>
           <div className="flex flex-col gap-4">
             {utilityAccounts.map(account => {
-              const property = MOCK_PROPERTIES.find(p => p.id === account.propertyId);
+              const property = properties.find(p => p.id === account.propertyId);
               const status = getUtilityStatus(account.id);
               return (
                 <div key={account.id} className="bg-white dark:bg-surface-dark p-5 rounded-[28px] border border-slate-100 dark:border-white/5 shadow-sm group">
@@ -461,7 +462,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
                 onChange={e => setNewExpense({ ...newExpense, propertyId: e.target.value })}
               >
                 <option value="">Select Property...</option>
-                {MOCK_PROPERTIES.map(p => (
+                {properties.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
@@ -506,7 +507,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
                 value={utilityFormData.propertyId}
                 onChange={e => setUtilityFormData({ ...utilityFormData, propertyId: e.target.value })}
               >
-                {MOCK_PROPERTIES.map(p => (
+                {properties.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>

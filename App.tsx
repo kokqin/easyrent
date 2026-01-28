@@ -121,6 +121,7 @@ const App: React.FC = () => {
         return (
           <FinanceList
             expenses={expenses}
+            properties={properties}
             utilityAccounts={utilityAccounts}
             onAddExpense={handleAddExpense}
             onDeleteExpense={handleDeleteExpense}
