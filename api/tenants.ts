@@ -85,7 +85,7 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant |
         .from('tenants')
         .insert([{ ...mapTenantToRow(tenant), user_id: user.id }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error creating tenant:', error);
@@ -107,7 +107,7 @@ export async function updateTenant(id: string, updates: Partial<Tenant>): Promis
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error updating tenant:', error);

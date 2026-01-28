@@ -46,7 +46,7 @@ export async function createUtilityAccount(account: Omit<UtilityAccount, 'id'>):
         .from('utility_accounts')
         .insert([{ ...mapUtilityAccountToRow(account), user_id: user.id }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error creating utility account:', error);
@@ -68,7 +68,7 @@ export async function updateUtilityAccount(id: string, updates: Partial<UtilityA
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error updating utility account:', error);

@@ -66,7 +66,7 @@ export async function createProperty(property: Partial<Property>): Promise<Prope
             user_id: user.id
         }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error creating property:', error);
@@ -88,7 +88,7 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error updating property:', error);
@@ -128,7 +128,7 @@ export async function addRoom(propertyId: string, roomNumber: string): Promise<R
         .from('rooms')
         .insert([{ property_id: propertyId, number: roomNumber, user_id: user.id }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error adding room:', error);
@@ -141,12 +141,16 @@ export async function addRoom(propertyId: string, roomNumber: string): Promise<R
 export async function updateRoom(roomId: string, roomNumber: string): Promise<Room | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('rooms')
         .update({ number: roomNumber })
         .eq('id', roomId)
+        .eq('user_id', user.id)
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error updating room:', error);

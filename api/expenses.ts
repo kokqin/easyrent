@@ -54,7 +54,7 @@ export async function createExpense(expense: Omit<Expense, 'id'>): Promise<Expen
         .from('expenses')
         .insert([{ ...mapExpenseToRow(expense), user_id: user.id }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error creating expense:', error);

@@ -14,9 +14,13 @@ const mapRowToActivity = (row: any): Activity => ({
 export async function getActivities(): Promise<Activity[]> {
     if (!supabase) return [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
         .from('activities')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -31,6 +35,9 @@ export async function getActivities(): Promise<Activity[]> {
 export async function createActivity(activity: Omit<Activity, 'id'>): Promise<Activity | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('activities')
         .insert([{
@@ -39,10 +46,11 @@ export async function createActivity(activity: Omit<Activity, 'id'>): Promise<Ac
             details: activity.details,
             amount: activity.amount,
             timestamp: activity.timestamp,
-            status: activity.status
+            status: activity.status,
+            user_id: user.id
         }])
         .select()
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error creating activity:', error);
