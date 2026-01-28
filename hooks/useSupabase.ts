@@ -26,7 +26,7 @@ export function useTenants() {
 
         setState(prev => ({ ...prev, loading: true }));
         const data = await api.getTenants();
-        setState({ data: data.length > 0 ? data : MOCK_TENANTS, loading: false, error: null });
+        setState({ data, loading: false, error: null });
     }, []);
 
     useEffect(() => {
@@ -102,7 +102,7 @@ export function useExpenses() {
 
         setState(prev => ({ ...prev, loading: true }));
         const data = await api.getExpenses();
-        setState({ data: data.length > 0 ? data : MOCK_EXPENSES, loading: false, error: null });
+        setState({ data, loading: false, error: null });
     }, []);
 
     useEffect(() => {
@@ -159,7 +159,7 @@ export function useUtilityAccounts() {
 
         setState(prev => ({ ...prev, loading: true }));
         const data = await api.getUtilityAccounts();
-        setState({ data: data.length > 0 ? data : MOCK_UTILITY_ACCOUNTS, loading: false, error: null });
+        setState({ data, loading: false, error: null });
     }, []);
 
     useEffect(() => {
@@ -235,7 +235,7 @@ export function useProperties() {
 
         setState(prev => ({ ...prev, loading: true }));
         const data = await api.getProperties();
-        setState({ data: data.length > 0 ? data : MOCK_PROPERTIES, loading: false, error: null });
+        setState({ data, loading: false, error: null });
     }, []);
 
     useEffect(() => {
@@ -311,7 +311,7 @@ export function useActivities() {
 
         setState(prev => ({ ...prev, loading: true }));
         const data = await api.getActivities();
-        setState({ data: data.length > 0 ? data : RECENT_ACTIVITIES, loading: false, error: null });
+        setState({ data, loading: false, error: null });
     }, []);
 
     useEffect(() => {
