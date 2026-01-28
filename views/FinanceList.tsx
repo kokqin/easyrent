@@ -102,14 +102,14 @@ const FinanceList: React.FC<FinanceListProps> = ({
     };
   }, [selectedMonth, expenses]);
 
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!newExpense.title || !newExpense.amount) return;
 
     const parsedAmount = parseFloat(newExpense.amount);
     if (isNaN(parsedAmount)) return;
 
-    const expense: Expense = {
-      id: Date.now().toString(),
+    // Start with a temporary object (API will provide real ID)
+    const expenseData: Omit<Expense, 'id'> = {
       title: newExpense.title,
       amount: parsedAmount,
       date: newExpense.date,
@@ -120,7 +120,9 @@ const FinanceList: React.FC<FinanceListProps> = ({
       photos: newExpense.photos
     };
 
-    onAddExpense(expense);
+    // onAddExpense is now expected to handle the API call and state update
+    // If it's the hook version, it might return the new item
+    const createdItem = await (onAddExpense as any)(expenseData);
 
     // Automatically switch view to the month of the added record
     const recordMonth = newExpense.date.substring(0, 7);
@@ -140,7 +142,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     setShowAddForm(false);
   };
 
-  const handleSaveUtility = () => {
+  const handleSaveUtility = async () => {
     if (!utilityFormData.accountNumber || !utilityFormData.provider) return;
 
     if (editingUtilityId) {
@@ -149,11 +151,8 @@ const FinanceList: React.FC<FinanceListProps> = ({
         ...utilityFormData
       });
     } else {
-      const utility: UtilityAccount = {
-        id: Date.now().toString(),
-        ...utilityFormData
-      };
-      onAddUtility(utility);
+      // onAddUtility handles API and state
+      await (onAddUtility as any)(utilityFormData);
     }
 
     setUtilityFormData({

@@ -112,13 +112,14 @@ export function useExpenses() {
     const addExpense = useCallback(async (expense: Expense) => {
         if (!isSupabaseConfigured()) {
             setState(prev => ({ ...prev, data: [expense, ...prev.data] }));
-            return;
+            return expense;
         }
 
         const newExpense = await api.createExpense(expense);
         if (newExpense) {
             setState(prev => ({ ...prev, data: [newExpense, ...prev.data] }));
         }
+        return newExpense;
     }, []);
 
     const deleteExpense = useCallback(async (id: string) => {
@@ -169,13 +170,14 @@ export function useUtilityAccounts() {
     const addUtility = useCallback(async (utility: UtilityAccount) => {
         if (!isSupabaseConfigured()) {
             setState(prev => ({ ...prev, data: [...prev.data, utility] }));
-            return;
+            return utility;
         }
 
         const newUtility = await api.createUtilityAccount(utility);
         if (newUtility) {
             setState(prev => ({ ...prev, data: [...prev.data, newUtility] }));
         }
+        return newUtility;
     }, []);
 
     const updateUtility = useCallback(async (utility: UtilityAccount) => {
