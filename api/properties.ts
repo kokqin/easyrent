@@ -52,7 +52,7 @@ export async function getProperties(): Promise<Property[]> {
     );
 }
 
-export async function createProperty(property: Omit<Property, 'id' | 'rooms'>): Promise<Property | null> {
+export async function createProperty(property: Partial<Property>): Promise<Property | null> {
     if (!supabase) return null;
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -60,7 +60,11 @@ export async function createProperty(property: Omit<Property, 'id' | 'rooms'>): 
 
     const { data, error } = await supabase
         .from('properties')
-        .insert([{ name: property.name, address: property.address, user_id: user.id }])
+        .insert([{
+            name: property.name || 'New Property',
+            address: property.address || 'No address',
+            user_id: user.id
+        }])
         .select()
         .single();
 
