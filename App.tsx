@@ -89,6 +89,7 @@ const App: React.FC = () => {
             onSelectTenant={navigateToLeaseDetails}
             expenses={expenses}
             tenants={tenants}
+            properties={properties}
             utilityAccounts={utilityAccounts}
             userProfile={userProfile}
             onUpdateProfile={handleUpdateProfile}
@@ -143,6 +144,7 @@ const App: React.FC = () => {
             onSelectTenant={navigateToLeaseDetails}
             expenses={expenses}
             tenants={tenants}
+            properties={properties}
             utilityAccounts={utilityAccounts}
             userProfile={userProfile}
             onUpdateProfile={handleUpdateProfile}

@@ -2,13 +2,14 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { REVENUE_DATA, RECENT_ACTIVITIES, MOCK_PROPERTIES } from '../constants';
-import { Expense, Tenant, UtilityAccount } from '../types';
+import { Expense, Tenant, UtilityAccount, Property } from '../types';
 import { supabase, getSupabaseConfig, updateSupabaseConfig, clearSupabaseConfig, isConfigBound } from '../lib/supabaseClient';
 
 interface DashboardProps {
   onSelectTenant: (id: string) => void;
   expenses: Expense[];
   tenants: Tenant[];
+  properties: Property[];
   utilityAccounts: UtilityAccount[];
   userProfile: { name: string; avatar: string; email?: string };
   onUpdateProfile: (updates: Partial<{ name: string; avatar: string }>) => void;
@@ -18,6 +19,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onSelectTenant,
   expenses,
   tenants,
+  properties,
   utilityAccounts,
   userProfile,
   onUpdateProfile
@@ -97,13 +99,84 @@ const Dashboard: React.FC<DashboardProps> = ({
       reader.readAsDataURL(file);
     }
   };
-
   const handleNameSave = () => {
     if (tempName.trim()) {
       onUpdateProfile({ name: tempName });
     }
     setIsEditingName(false);
   };
+
+  // Derived Stats
+  const vacantRoomsCount = useMemo(() => {
+    let totalRooms = 0;
+    const occupiedUnits = new Set(tenants.map(t => t.unit));
+
+    // Count all rooms in all properties
+    properties.forEach(p => {
+      totalRooms += p.rooms.length;
+    });
+
+    return Math.max(0, totalRooms - occupiedUnits.size);
+  }, [tenants, properties]);
+
+  // Derive Revenue Chart Data
+  const { revenueChartData, totalRevenueMonth } = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.toISOString().substring(0, 7);
+
+    // Filter income for the current month
+    const incomeThisMonth = expenses.filter(e => e.type === 'Income' && e.date.startsWith(currentMonth));
+    const total = incomeThisMonth.reduce((sum, e) => sum + e.amount, 0);
+
+    // Create 4-week data points (Simplified: 1/4th of total per point or group by day/week)
+    // For now, let's create a more realistic looking chart based on transaction dates
+    const weeklyData = [
+      { week: 'Week 1', amount: 0 },
+      { week: 'Week 2', amount: 0 },
+      { week: 'Week 3', amount: 0 },
+      { week: 'Current', amount: 0 }
+    ];
+
+    incomeThisMonth.forEach(e => {
+      const day = new Date(e.date).getDate();
+      if (day <= 7) weeklyData[0].amount += e.amount;
+      else if (day <= 14) weeklyData[1].amount += e.amount;
+      else if (day <= 21) weeklyData[2].amount += e.amount;
+      else weeklyData[3].amount += e.amount;
+    });
+
+    // If no data, fallback to a small baseline to avoid empty chart
+    if (total === 0) {
+      return {
+        revenueChartData: REVENUE_DATA,
+        totalRevenueMonth: REVENUE_DATA[REVENUE_DATA.length - 1].amount
+      };
+    }
+
+    return { revenueChartData: weeklyData, totalRevenueMonth: total };
+  }, [expenses]);
+
+  // Derive Recent Activity
+  const recentActivitiesList = useMemo(() => {
+    const today = new Date();
+    const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const top5 = sortedExpenses.slice(0, 5);
+
+    return top5.map(e => {
+      const diffMs = today.getTime() - new Date(e.date).getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const timestamp = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Yesterday' : `${diffDays}d ago`;
+
+      return {
+        id: e.id,
+        type: e.type === 'Income' ? 'payment' : (e.category === 'Maintenance' ? 'maintenance' : 'lease'),
+        title: e.title,
+        details: e.category,
+        amount: `${e.type === 'Income' ? '+' : '-'}$${e.amount.toLocaleString()}`,
+        timestamp
+      };
+    });
+  }, [expenses]);
 
   return (
     <div className="flex flex-col gap-6 pt-8 relative">
@@ -224,7 +297,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div>
               <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">Vacant Rooms</p>
-              <p className="text-2xl font-bold tracking-tight text-orange-600 dark:text-orange-400">6</p>
+              <p className="text-2xl font-bold tracking-tight text-orange-600 dark:text-orange-400">{vacantRoomsCount}</p>
             </div>
           </div>
         </div>
@@ -236,7 +309,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div className="flex flex-col">
               <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Monthly Revenue</p>
-              <h3 className="text-3xl font-extrabold tracking-tight">$42,500</h3>
+              <h3 className="text-3xl font-extrabold tracking-tight">${totalRevenueMonth.toLocaleString()}</h3>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-sm font-bold text-primary flex items-center bg-primary/10 px-2 py-1 rounded-lg">
@@ -248,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="h-40 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={REVENUE_DATA}>
+              <AreaChart data={revenueChartData}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#13ec5b" stopOpacity={0.3} />
@@ -288,31 +361,41 @@ const Dashboard: React.FC<DashboardProps> = ({
           <button className="text-primary text-sm font-bold hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">See All</button>
         </div>
         <div className="flex flex-col gap-3">
-          {RECENT_ACTIVITIES.map((activity) => (
-            <div
-              key={activity.id}
-              className="group flex items-center gap-4 p-3 pr-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-[0.99]"
-            >
-              <div className={`size-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${activity.type === 'payment' ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' :
-                activity.type === 'lease' ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' :
-                  'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
-                }`}>
-                <span className="material-symbols-outlined text-[22px]">
-                  {activity.type === 'payment' ? 'payments' : activity.type === 'lease' ? 'edit_document' : 'plumbing'}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-0.5">
-                  <p className="text-sm font-bold truncate">{activity.title}</p>
-                  {activity.amount && <span className="text-xs font-semibold text-green-600 dark:text-green-400">{activity.amount}</span>}
+          {recentActivitiesList.length > 0 ? (
+            recentActivitiesList.map((activity) => (
+              <div
+                key={activity.id}
+                className="group flex items-center gap-4 p-3 pr-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <div className={`size-12 rounded-full flex items-center justify-center shrink-0 transition-colors ${activity.type === 'payment' ? 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400' :
+                  activity.type === 'lease' ? 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                    'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                  }`}>
+                  <span className="material-symbols-outlined text-[22px]">
+                    {activity.type === 'payment' ? 'payments' : activity.type === 'lease' ? 'edit_document' : 'plumbing'}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{activity.details}</p>
-                  <span className="text-[10px] font-medium text-slate-400">{activity.timestamp}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center mb-0.5">
+                    <p className="text-sm font-bold truncate">{activity.title}</p>
+                    {activity.amount && (
+                      <span className={`text-xs font-semibold ${activity.amount.startsWith('+') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {activity.amount}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{activity.details}</p>
+                    <span className="text-[10px] font-medium text-slate-400">{activity.timestamp}</span>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+              No recent activity
             </div>
-          ))}
+          )}
         </div>
       </section>
 
