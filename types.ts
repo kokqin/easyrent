@@ -52,6 +52,7 @@ export interface Expense {
   amount: number;
   date: string;
   category: ExpenseCategory;
+  type: 'Income' | 'Expense';
   photos: string[];
   propertyId?: string;
   utilityAccountId?: string; // Link to a specific utility account

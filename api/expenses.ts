@@ -7,6 +7,7 @@ const mapRowToExpense = (row: any): Expense => ({
     amount: parseFloat(row.amount),
     date: row.date,
     category: row.category,
+    type: row.type || 'Expense',
     photos: row.photos || [],
     propertyId: row.property_id,
     utilityAccountId: row.utility_account_id
@@ -17,6 +18,7 @@ const mapExpenseToRow = (expense: Partial<Expense>) => ({
     amount: expense.amount,
     date: expense.date,
     category: expense.category,
+    type: expense.type,
     photos: expense.photos,
     property_id: expense.propertyId,
     utility_account_id: expense.utilityAccountId

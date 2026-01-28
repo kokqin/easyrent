@@ -13,14 +13,14 @@ interface FinanceListProps {
   onDeleteUtility: (id: string) => void;
 }
 
-const FinanceList: React.FC<FinanceListProps> = ({ 
-  expenses, 
-  utilityAccounts, 
-  onAddExpense, 
-  onDeleteExpense, 
-  onAddUtility, 
+const FinanceList: React.FC<FinanceListProps> = ({
+  expenses,
+  utilityAccounts,
+  onAddExpense,
+  onDeleteExpense,
+  onAddUtility,
   onUpdateUtility,
-  onDeleteUtility 
+  onDeleteUtility
 }) => {
   const [activeTab, setActiveTab] = useState<'Overview' | 'Utility Accounts'>('Overview');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -37,6 +37,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     amount: string;
     date: string;
     category: ExpenseCategory;
+    type: 'Income' | 'Expense';
     utilityAccountId: string;
     propertyId: string;
     photos: string[];
@@ -45,6 +46,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
     amount: '',
     date: new Date().toISOString().split('T')[0],
     category: 'Maintenance',
+    type: 'Expense',
     utilityAccountId: '',
     propertyId: MOCK_PROPERTIES[0]?.id || '',
     photos: []
@@ -65,7 +67,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
   const monthOptions = useMemo(() => {
     const options = [];
     const startYear = 2024;
-    const startMonth = 0; 
+    const startMonth = 0;
     const startDate = new Date(startYear, startMonth, 1);
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 6);
@@ -88,20 +90,24 @@ const FinanceList: React.FC<FinanceListProps> = ({
       return exp.date.substring(0, 7) === selectedMonth;
     });
 
-    const totalIncome = MOCK_TENANTS.reduce((sum, tenant) => sum + tenant.rent, 0);
-    const totalExpAmount = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-    
+    const mockIncome = MOCK_TENANTS.reduce((sum, tenant) => sum + tenant.rent, 0);
+    const addedIncome = filteredExpenses.filter(e => e.type === 'Income').reduce((sum, exp) => sum + exp.amount, 0);
+    const addedExpenses = filteredExpenses.filter(e => e.type === 'Expense').reduce((sum, exp) => sum + exp.amount, 0);
+
+    const totalIncome = mockIncome + addedIncome;
+    const totalExpenses = addedExpenses;
+
     return {
       expenses: filteredExpenses,
       totalIncome,
-      totalExpenses: totalExpAmount,
-      netBalance: totalIncome - totalExpAmount
+      totalExpenses,
+      netBalance: totalIncome - totalExpenses
     };
   }, [selectedMonth, expenses]);
 
   const handleAddExpense = () => {
     if (!newExpense.title || !newExpense.amount) return;
-    
+
     const parsedAmount = parseFloat(newExpense.amount);
     if (isNaN(parsedAmount)) return;
 
@@ -109,35 +115,37 @@ const FinanceList: React.FC<FinanceListProps> = ({
       id: Date.now().toString(),
       title: newExpense.title,
       amount: parsedAmount,
-      date: newExpense.date, 
+      date: newExpense.date,
       category: newExpense.category,
+      type: newExpense.type,
       utilityAccountId: newExpense.category === 'Utilities' ? newExpense.utilityAccountId : undefined,
       propertyId: newExpense.propertyId,
       photos: newExpense.photos
     };
 
     onAddExpense(expense);
-    
+
     // Automatically switch view to the month of the added record
     const recordMonth = newExpense.date.substring(0, 7);
     setSelectedMonth(recordMonth);
 
     // Reset form
-    setNewExpense({ 
-      title: '', 
-      amount: '', 
+    setNewExpense({
+      title: '',
+      amount: '',
       date: new Date().toISOString().split('T')[0],
-      category: 'Maintenance', 
-      utilityAccountId: '', 
+      category: 'Maintenance',
+      type: 'Expense',
+      utilityAccountId: '',
       propertyId: MOCK_PROPERTIES[0]?.id || '',
-      photos: [] 
+      photos: []
     });
     setShowAddForm(false);
   };
 
   const handleSaveUtility = () => {
     if (!utilityFormData.accountNumber || !utilityFormData.provider) return;
-    
+
     if (editingUtilityId) {
       onUpdateUtility({
         id: editingUtilityId,
@@ -151,11 +159,11 @@ const FinanceList: React.FC<FinanceListProps> = ({
       onAddUtility(utility);
     }
 
-    setUtilityFormData({ 
-      type: 'Electricity', 
-      accountNumber: '', 
-      provider: '', 
-      propertyId: MOCK_PROPERTIES[0]?.id || '' 
+    setUtilityFormData({
+      type: 'Electricity',
+      accountNumber: '',
+      provider: '',
+      propertyId: MOCK_PROPERTIES[0]?.id || ''
     });
     setEditingUtilityId(null);
     setShowUtilityForm(false);
@@ -179,16 +187,17 @@ const FinanceList: React.FC<FinanceListProps> = ({
 
     const lastDateObj = new Date(latestPayment.date);
     const today = new Date();
-    today.setHours(0,0,0,0);
-    lastDateObj.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
+    lastDateObj.setHours(0, 0, 0, 0);
     const diffDays = Math.floor((today.getTime() - lastDateObj.getTime()) / (1000 * 60 * 60 * 24));
     return { isPaid: diffDays <= 30, lastDate: latestPayment.date };
   };
 
   const getExpenseIcon = (expense: Expense) => {
+    if (expense.type === 'Income') return { icon: 'trending_up', color: 'bg-green-500/10 text-green-500' };
     if (expense.category === 'Maintenance') return { icon: 'build', color: 'bg-red-500/10 text-red-500' };
     if (expense.category === 'Cleaning') return { icon: 'cleaning_services', color: 'bg-blue-500/10 text-blue-500' };
-    
+
     if (expense.category === 'Utilities' && expense.utilityAccountId) {
       const account = utilityAccounts.find(a => a.id === expense.utilityAccountId);
       if (account) {
@@ -200,7 +209,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
       }
       return { icon: 'bolt', color: 'bg-yellow-500/10 text-yellow-500' };
     }
-    
+
     return { icon: 'receipt_long', color: 'bg-slate-500/10 text-slate-500' };
   };
 
@@ -213,18 +222,17 @@ const FinanceList: React.FC<FinanceListProps> = ({
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
-              className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
-                activeTab === tab 
-                  ? 'bg-white dark:bg-background-dark text-primary shadow-sm' 
-                  : 'text-slate-400'
-              }`}
+              className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === tab
+                ? 'bg-white dark:bg-background-dark text-primary shadow-sm'
+                : 'text-slate-400'
+                }`}
             >
               {tab}
             </button>
           ))}
         </div>
         <div className="relative inline-block w-fit">
-          <select 
+          <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="appearance-none bg-slate-100 dark:bg-surface-dark border-none rounded-full px-4 py-1.5 text-xs font-bold text-primary focus:ring-2 focus:ring-primary pr-8 cursor-pointer uppercase tracking-wider"
@@ -270,8 +278,8 @@ const FinanceList: React.FC<FinanceListProps> = ({
 
           <section className="px-5 pb-24 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black uppercase tracking-tight text-slate-400">Expense Records</h3>
-              <button 
+              <h3 className="text-lg font-black uppercase tracking-tight text-slate-400">Finance Records</h3>
+              <button
                 onClick={() => setShowAddForm(true)}
                 className="text-primary text-xs font-black uppercase tracking-widest flex items-center gap-1.5 bg-primary/10 px-4 py-2.5 rounded-2xl active:scale-95 transition-transform"
               >
@@ -301,9 +309,11 @@ const FinanceList: React.FC<FinanceListProps> = ({
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className="font-black text-red-500 text-sm">-${expense.amount.toLocaleString()}</span>
+                        <span className={`font-black text-sm ${expense.type === 'Income' ? 'text-green-500' : 'text-red-500'}`}>
+                          {expense.type === 'Income' ? '+' : '-'}${expense.amount.toLocaleString()}
+                        </span>
                         <button onClick={() => onDeleteExpense(expense.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <span className="material-symbols-outlined text-lg">delete</span>
+                          <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
                       </div>
                     </div>
@@ -323,7 +333,7 @@ const FinanceList: React.FC<FinanceListProps> = ({
         <section className="px-5 pb-24 flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-black uppercase tracking-tight text-slate-400">Utility Accounts</h3>
-            <button 
+            <button
               onClick={() => {
                 setEditingUtilityId(null);
                 setUtilityFormData({ type: 'Electricity', accountNumber: '', provider: '', propertyId: MOCK_PROPERTIES[0]?.id || '' });
@@ -343,11 +353,10 @@ const FinanceList: React.FC<FinanceListProps> = ({
                 <div key={account.id} className="bg-white dark:bg-surface-dark p-5 rounded-[28px] border border-slate-100 dark:border-white/5 shadow-sm group">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 ${
-                        account.type === 'Electricity' ? 'bg-yellow-500/10 text-yellow-500' :
+                      <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 ${account.type === 'Electricity' ? 'bg-yellow-500/10 text-yellow-500' :
                         account.type === 'Water' ? 'bg-blue-500/10 text-blue-500' :
-                        'bg-purple-500/10 text-purple-500'
-                      }`}>
+                          'bg-purple-500/10 text-purple-500'
+                        }`}>
                         <span className="material-symbols-outlined text-[30px] filled">
                           {account.type === 'Electricity' ? 'bolt' : account.type === 'Water' ? 'water_drop' : 'wifi'}
                         </span>
@@ -359,19 +368,18 @@ const FinanceList: React.FC<FinanceListProps> = ({
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                         status.isPaid ? 'bg-green-100 text-green-700 dark:bg-primary/20 dark:text-primary' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
-                       }`}>
-                         {status.isPaid ? 'Paid' : 'Unpaid'}
-                       </span>
-                       <div className="flex items-center gap-1">
-                          <button onClick={() => startEditUtility(account)} className="text-slate-300 hover:text-primary transition-colors">
-                            <span className="material-symbols-outlined text-xl">edit</span>
-                          </button>
-                          <button onClick={() => onDeleteUtility(account.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                            <span className="material-symbols-outlined text-xl">delete</span>
-                          </button>
-                       </div>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${status.isPaid ? 'bg-green-100 text-green-700 dark:bg-primary/20 dark:text-primary' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 animate-pulse'
+                        }`}>
+                        {status.isPaid ? 'Paid' : 'Unpaid'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => startEditUtility(account)} className="text-slate-300 hover:text-primary transition-colors">
+                          <span className="material-symbols-outlined text-xl">edit</span>
+                        </button>
+                        <button onClick={() => onDeleteUtility(account.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                          <span className="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
@@ -382,8 +390,8 @@ const FinanceList: React.FC<FinanceListProps> = ({
                       </span>
                     </div>
                     <div className="text-right">
-                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Provider</span>
-                       <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{account.provider}</p>
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Provider</span>
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{account.provider}</p>
                     </div>
                   </div>
                 </div>
@@ -403,31 +411,47 @@ const FinanceList: React.FC<FinanceListProps> = ({
               </button>
             </div>
             <div className="space-y-4">
-              <input 
-                type="text" 
-                placeholder="Title (e.g. Roof Repair)" 
-                className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
+              <div className="flex p-1 bg-slate-100 dark:bg-background-dark rounded-2xl">
+                {(['Expense', 'Income'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setNewExpense({ ...newExpense, type: t, category: t === 'Income' ? 'Other' : newExpense.category })}
+                    className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${newExpense.type === t
+                      ? (t === 'Expense' ? 'bg-white dark:bg-surface-dark text-red-500 shadow-sm' : 'bg-white dark:bg-surface-dark text-green-500 shadow-sm')
+                      : 'text-slate-400'
+                      }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                placeholder={newExpense.category === 'Other' ? "Description (e.g. Extra Rent, Bonus)" : "Title (e.g. Roof Repair)"}
+                className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner"
                 value={newExpense.title}
-                onChange={e => setNewExpense({...newExpense, title: e.target.value})}
+                onChange={e => setNewExpense({ ...newExpense, title: e.target.value })}
               />
-              <input 
-                type="date" 
-                className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
+              <input
+                type="date"
+                className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner"
                 value={newExpense.date}
-                onChange={e => setNewExpense({...newExpense, date: e.target.value})}
+                onChange={e => setNewExpense({ ...newExpense, date: e.target.value })}
               />
               <div className="grid grid-cols-2 gap-3">
-                <input 
-                  type="number" 
-                  placeholder="Amount" 
-                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-black"
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-black focus:ring-2 focus:ring-primary shadow-inner"
                   value={newExpense.amount}
-                  onChange={e => setNewExpense({...newExpense, amount: e.target.value})}
+                  onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })}
                 />
-                <select 
-                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
+                <select
+                  className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
                   value={newExpense.category}
-                  onChange={e => setNewExpense({...newExpense, category: e.target.value as ExpenseCategory})}
+                  onChange={e => setNewExpense({ ...newExpense, category: e.target.value as ExpenseCategory })}
+                  disabled={newExpense.type === 'Income'}
                 >
                   <option value="Maintenance">Maintenance</option>
                   <option value="Cleaning">Cleaning</option>
@@ -435,22 +459,23 @@ const FinanceList: React.FC<FinanceListProps> = ({
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <select 
-                className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold"
+              <select
+                className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary shadow-inner appearance-none"
                 value={newExpense.propertyId}
-                onChange={e => setNewExpense({...newExpense, propertyId: e.target.value})}
+                onChange={e => setNewExpense({ ...newExpense, propertyId: e.target.value })}
               >
+                <option value="">Select Property...</option>
                 {MOCK_PROPERTIES.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
               {newExpense.category === 'Utilities' && (
-                <select 
+                <select
                   className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-4 text-sm font-bold"
                   value={newExpense.utilityAccountId}
                   onChange={e => {
                     const acc = utilityAccounts.find(a => a.id === e.target.value);
-                    setNewExpense({...newExpense, utilityAccountId: e.target.value, title: acc ? `${acc.type} Payment` : newExpense.title});
+                    setNewExpense({ ...newExpense, utilityAccountId: e.target.value, title: acc ? `${acc.type} Payment` : newExpense.title });
                   }}
                 >
                   <option value="">Select Account...</option>
@@ -459,8 +484,8 @@ const FinanceList: React.FC<FinanceListProps> = ({
                   ))}
                 </select>
               )}
-              <button 
-                onClick={handleAddExpense} 
+              <button
+                onClick={handleAddExpense}
                 className="w-full bg-primary text-background-dark font-black py-4.5 rounded-[24px] uppercase active:scale-95 transition-transform"
               >
                 Save Record
@@ -480,40 +505,40 @@ const FinanceList: React.FC<FinanceListProps> = ({
               </button>
             </div>
             <div className="space-y-4">
-              <select 
+              <select
                 className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
                 value={utilityFormData.propertyId}
-                onChange={e => setUtilityFormData({...utilityFormData, propertyId: e.target.value})}
+                onChange={e => setUtilityFormData({ ...utilityFormData, propertyId: e.target.value })}
               >
                 {MOCK_PROPERTIES.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
-              <select 
+              <select
                 className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
                 value={utilityFormData.type}
-                onChange={e => setUtilityFormData({...utilityFormData, type: e.target.value as UtilityType})}
+                onChange={e => setUtilityFormData({ ...utilityFormData, type: e.target.value as UtilityType })}
               >
                 <option value="Electricity">Electricity</option>
                 <option value="Water">Water</option>
                 <option value="Internet">Internet</option>
               </select>
-              <input 
-                type="text" 
-                placeholder="Account Number" 
+              <input
+                type="text"
+                placeholder="Account Number"
                 className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
                 value={utilityFormData.accountNumber}
-                onChange={e => setUtilityFormData({...utilityFormData, accountNumber: e.target.value})}
+                onChange={e => setUtilityFormData({ ...utilityFormData, accountNumber: e.target.value })}
               />
-              <input 
-                type="text" 
-                placeholder="Provider Name" 
+              <input
+                type="text"
+                placeholder="Provider Name"
                 className="w-full bg-slate-50 dark:bg-background-dark border-none rounded-2xl p-4 text-sm font-bold"
                 value={utilityFormData.provider}
-                onChange={e => setUtilityFormData({...utilityFormData, provider: e.target.value})}
+                onChange={e => setUtilityFormData({ ...utilityFormData, provider: e.target.value })}
               />
-              <button 
-                onClick={handleSaveUtility} 
+              <button
+                onClick={handleSaveUtility}
                 className="w-full bg-primary text-background-dark font-black py-4.5 rounded-[24px] uppercase"
               >
                 {editingUtilityId ? 'Update Account' : 'Link Account'}

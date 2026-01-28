@@ -37,6 +37,7 @@ export const MOCK_EXPENSES: Expense[] = [
     amount: 250,
     date: '2024-03-15',
     category: 'Maintenance',
+    type: 'Expense',
     photos: ['https://images.unsplash.com/photo-1581094288338-2314dddb7bc3?auto=format&fit=crop&q=80&w=200']
   },
   {
@@ -45,6 +46,7 @@ export const MOCK_EXPENSES: Expense[] = [
     amount: 120,
     date: '2024-03-10',
     category: 'Cleaning',
+    type: 'Expense',
     photos: ['https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=200']
   }
 ];
