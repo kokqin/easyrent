@@ -49,6 +49,11 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 export const isSupabaseConfigured = () => !!supabase;
 
+export const isConfigBound = (email?: string) => {
+    const config = getStoredConfig(email);
+    return !!(config.url && config.key);
+};
+
 export const updateSupabaseConfig = (url: string, key: string, email?: string) => {
     localStorage.setItem(getStorageKey('url', email), url);
     localStorage.setItem(getStorageKey('key', email), key);

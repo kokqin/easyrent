@@ -3,7 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { REVENUE_DATA, RECENT_ACTIVITIES, MOCK_PROPERTIES } from '../constants';
 import { Expense, Tenant, UtilityAccount } from '../types';
-import { supabase, getSupabaseConfig, updateSupabaseConfig, clearSupabaseConfig } from '../lib/supabaseClient';
+import { supabase, getSupabaseConfig, updateSupabaseConfig, clearSupabaseConfig, isConfigBound } from '../lib/supabaseClient';
 
 interface DashboardProps {
   onSelectTenant: (id: string) => void;
@@ -403,6 +403,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">settings</span>
                 <h4 className="text-xl font-black tracking-tight">Database Settings</h4>
+                {isConfigBound(userProfile.email) && (
+                  <span className="flex items-center gap-1 bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-green-500/20">
+                    <span className="size-1 bg-green-500 rounded-full animate-pulse"></span>
+                    Bound
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => setShowSettings(false)}
