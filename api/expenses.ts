@@ -27,9 +27,13 @@ const mapExpenseToRow = (expense: Partial<Expense>) => ({
 export async function getExpenses(): Promise<Expense[]> {
     if (!supabase) return [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
         .from('expenses')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
 
     if (error) {
@@ -43,9 +47,12 @@ export async function getExpenses(): Promise<Expense[]> {
 export async function createExpense(expense: Omit<Expense, 'id'>): Promise<Expense | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('expenses')
-        .insert([mapExpenseToRow(expense)])
+        .insert([{ ...mapExpenseToRow(expense), user_id: user.id }])
         .select()
         .single();
 
@@ -60,10 +67,14 @@ export async function createExpense(expense: Omit<Expense, 'id'>): Promise<Expen
 export async function deleteExpense(id: string): Promise<boolean> {
     if (!supabase) return false;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
         .from('expenses')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error deleting expense:', error);

@@ -19,9 +19,13 @@ const mapUtilityAccountToRow = (account: Partial<UtilityAccount>) => ({
 export async function getUtilityAccounts(): Promise<UtilityAccount[]> {
     if (!supabase) return [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
         .from('utility_accounts')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -35,9 +39,12 @@ export async function getUtilityAccounts(): Promise<UtilityAccount[]> {
 export async function createUtilityAccount(account: Omit<UtilityAccount, 'id'>): Promise<UtilityAccount | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('utility_accounts')
-        .insert([mapUtilityAccountToRow(account)])
+        .insert([{ ...mapUtilityAccountToRow(account), user_id: user.id }])
         .select()
         .single();
 
@@ -52,10 +59,14 @@ export async function createUtilityAccount(account: Omit<UtilityAccount, 'id'>):
 export async function updateUtilityAccount(id: string, updates: Partial<UtilityAccount>): Promise<UtilityAccount | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('utility_accounts')
         .update(mapUtilityAccountToRow(updates))
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -70,10 +81,14 @@ export async function updateUtilityAccount(id: string, updates: Partial<UtilityA
 export async function deleteUtilityAccount(id: string): Promise<boolean> {
     if (!supabase) return false;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
         .from('utility_accounts')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error deleting utility account:', error);

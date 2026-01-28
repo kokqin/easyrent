@@ -78,9 +78,12 @@ export async function getTenantById(id: string): Promise<Tenant | null> {
 export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('tenants')
-        .insert([mapTenantToRow(tenant)])
+        .insert([{ ...mapTenantToRow(tenant), user_id: user.id }])
         .select()
         .single();
 
@@ -95,10 +98,14 @@ export async function createTenant(tenant: Omit<Tenant, 'id'>): Promise<Tenant |
 export async function updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('tenants')
         .update(mapTenantToRow(updates))
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -113,10 +120,14 @@ export async function updateTenant(id: string, updates: Partial<Tenant>): Promis
 export async function deleteTenant(id: string): Promise<boolean> {
     if (!supabase) return false;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
         .from('tenants')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error deleting tenant:', error);

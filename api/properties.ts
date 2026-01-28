@@ -55,9 +55,12 @@ export async function getProperties(): Promise<Property[]> {
 export async function createProperty(property: Omit<Property, 'id' | 'rooms'>): Promise<Property | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('properties')
-        .insert([{ name: property.name, address: property.address }])
+        .insert([{ name: property.name, address: property.address, user_id: user.id }])
         .select()
         .single();
 
@@ -72,10 +75,14 @@ export async function createProperty(property: Omit<Property, 'id' | 'rooms'>): 
 export async function updateProperty(id: string, updates: Partial<Property>): Promise<Property | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('properties')
         .update({ name: updates.name, address: updates.address })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -90,10 +97,14 @@ export async function updateProperty(id: string, updates: Partial<Property>): Pr
 export async function deleteProperty(id: string): Promise<boolean> {
     if (!supabase) return false;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
     const { error } = await supabase
         .from('properties')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
     if (error) {
         console.error('Error deleting property:', error);
@@ -106,9 +117,12 @@ export async function deleteProperty(id: string): Promise<boolean> {
 export async function addRoom(propertyId: string, roomNumber: string): Promise<Room | null> {
     if (!supabase) return null;
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
     const { data, error } = await supabase
         .from('rooms')
-        .insert([{ property_id: propertyId, number: roomNumber }])
+        .insert([{ property_id: propertyId, number: roomNumber, user_id: user.id }])
         .select()
         .single();
 
