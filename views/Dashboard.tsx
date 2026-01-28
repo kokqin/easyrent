@@ -314,13 +314,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Monthly Revenue</p>
               <h3 className="text-3xl font-extrabold tracking-tight">${totalRevenueMonth.toLocaleString()}</h3>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-bold text-primary flex items-center bg-primary/10 px-2 py-1 rounded-lg">
-                <span className="material-symbols-outlined text-[16px] mr-1">trending_up</span>
-                12%
-              </span>
-              <p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-wider">vs last month</p>
-            </div>
           </div>
           <div className="h-40 w-full">
             <ResponsiveContainer width="100%" height="100%">
